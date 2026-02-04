@@ -1,3 +1,4 @@
+import { response } from "express";
 import { User } from "../models/user.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import errorHandler from '../utils/errorHandler.js';
@@ -26,7 +27,7 @@ const userRegister = asyncHandler ( async (req , res ) => {
 
     const {fullname , name , password , email} =  req.body
 
-    if(!fullname && !name && !password && !email){
+    if(!name && !password && !email){
         throw new errorHandler(400 , "Need every field")
     }
     
@@ -36,7 +37,6 @@ const userRegister = asyncHandler ( async (req , res ) => {
         throw new errorHandler(409 , "Username already exists");
     }
     const user = await User.create({
-        fullname,
         password,
         name,
         email,
@@ -60,10 +60,14 @@ const userLogin = asyncHandler ( async (req , res ) => {
         throw new errorHandler(401 , "Data is required while loggin in")
     }
 
-    const user = await User.findOne({email})
+    const user = await User.findOne({email});
 
-    const Loggedin = user.passwordVerification(password);
+    if( !user ){
+        throw new errorHandler( 404, "User not found" );
+    }
 
+    const Loggedin = await user.passwordVerification(password);
+    
     if(!Loggedin) throw new errorHandler(401 , "Password is incorrect");
     
     const { accessToken , refreshToken } = await accessAndRefreshTokenGenerator(user._id);
@@ -74,10 +78,26 @@ const userLogin = asyncHandler ( async (req , res ) => {
         new responseHandler(200 , {accessToken , user ,refreshToken} ,"user logged in successfully")
     );
 
+});
+
+const getUserProfile = asyncHandler( async ( req, res ) => {
+    
+    const user = await User.findById(req.user._id);
+
+    if( !user ){
+        throw new errorHandler( 404, "User not found" );
+    }
+
+    res.status(200)
+    .json(
+        new responseHandler( 200, "User fetched successfully", user )
+    )
+
 } )
 
 
 export {
     userRegister,
-    userLogin
+    userLogin,
+    getUserProfile
 }

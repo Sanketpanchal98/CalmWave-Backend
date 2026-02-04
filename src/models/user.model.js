@@ -7,9 +7,7 @@ const Schema = mongoose.Schema
 const UserSchema = new Schema({
     name : {
         type : String , 
-        required : true,
-        lowercase : true,
-        unique : true
+        required : true
     },
     email : {
         type : String , 
@@ -31,14 +29,14 @@ const UserSchema = new Schema({
 } , { timestamps : true })
 
 UserSchema.pre("save" ,  async function (next) {
-    if(!this.isModified("password")) return next();
+    if(!this.isModified("password")) return;
 
     this.password = await bcrypt.hash(this.password , 10);
-    next();
+    
 })
 
-UserSchema.methods.passwordVerification = function async (password) {
-    return bcrypt.compare(password , this.password);
+UserSchema.methods.passwordVerification = async function (password) {
+    return await bcrypt.compare(password , this.password);
 }
 
 UserSchema.methods.accessTokenGeneration = function () {

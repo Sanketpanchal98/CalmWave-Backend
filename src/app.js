@@ -25,4 +25,16 @@ app.get('/', ( req, res ) => {
 
 });
 
+//user routes
+
+import userRoutes from './routes/user.routes.js';
+import profileRoutes from './routes/profile.routes.js';
+import AuthMiddleware from './middlewares/auth.js';
+
+app.use('/api/v1/auth', userRoutes);
+
+app.use(AuthMiddleware);
+
+app.use('/api/v1/medical', profileRoutes);
+
 export default app;
